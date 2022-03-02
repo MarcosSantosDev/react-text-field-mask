@@ -1,6 +1,6 @@
 ## Input field with implementation of masks made with Regex
 
-Click here to view: [Project Sandbox](https://codesandbox.io/s/input-with-customizable-mask-b4nh67)
+Click here to view: [Project Sandbox](https://codesandbox.io/s/epic-tamas-4o7qiu)
 
 #####  This input component supports:
 
