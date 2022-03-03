@@ -22,7 +22,7 @@ where creativity with Regex takes you...
 Clone the project:
 
 ```
-git clone https://github.com/MarcosSantosDev/input-with-customizable-mask.git
+git clone https://github.com/MarcosSantosDev/react-text-field-mask.git
 ```
 
 ### Install dependencies
