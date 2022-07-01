@@ -17,7 +17,6 @@ function TextField(
   {
     name,
     maskType,
-    disabled = false,
     onChange,
     ...restProps
   }: TextFieldProps,
@@ -31,19 +30,14 @@ function TextField(
     return null;
   }, [maskType]);
 
-  const inputValue = value || undefined;
-
-  const handleChangeInput = React.useCallback(
-    (event: React.ChangeEvent<HTMLInputElement>) => {
-      if (mask !== null) {
-        event.currentTarget.value = mask.maskEvent(event);
-      }
-      if (typeof onChange === "function") {
-        onChange(event);
-      }
-    },
-    [mask, onChange]
-  );
+  const handleChangeInput = (event: React.ChangeEvent<HTMLInputElement>) => {
+    if (mask !== null) {
+      event.currentTarget.value = mask.maskEvent(event);
+    }
+    if (typeof onChange === "function") {
+      onChange(event);
+    }
+  };
 
   return (
     <input
