@@ -1,7 +1,17 @@
 /* eslint-disable no-param-reassign */
 import * as React from 'react';
 
-// 10.000,00 -> 10000.00
+const onlyLettersMask = (value: string | number) => {
+  const stringValue = value.toString();
+  return stringValue.replace(/[0-9!@#¨$%^&*)(+=._-]+/g, '');
+};
+
+const onlyNumbersMask = (value: string | number) => {
+  const stringValue = value.toString();
+  return stringValue.replace(/\D/g, '');
+};
+
+// 10.000,00 - 10000.00
 export const removeMoneyMask = (value: string | number) => {
   const originalNumber = Number(value);
   const numberIsWithMask = Number.isNaN(originalNumber);
@@ -24,34 +34,55 @@ type BehaviorMode = 'standard' | 'typing';
 
 const moneyMaskCustomization = {
   /**
-   * typingMode - The value is typed from right to left:
-   *  - '1' -> '0.01'
-   *  - '10' -> '0.10'
+   * Mask behavior mode: `standard` | `typing`.
+   * @param behaviorMode behavior mode
+   * @param value value to add behavior mode
    *
-   * defaultMode - Simple conversion:
-   *  - '1' -> '1.00'
-   *  - '10' -> '10.00'
+   *  Default behavior: `standard`
+   *
+   *  Example:
+   *
+   *  Mode `standard`:
+   *  - input: `1` - output: `1,00`
+   *
+   *  Mode `typing`:
+   *  - input: `1` - output: `0,01`
    */
   maskBehaviorMode: (behaviorMode: BehaviorMode, value: string | number) => {
     const numberWithoutMask = removeMoneyMask(value);
+
+    if (behaviorMode === 'standard') {
+      return Number(numberWithoutMask).toFixed(2);
+    }
+
     const normalizedMoneyValue = moneyMaskCustomization.normalizeMoneyValue(
       numberWithoutMask.toString(),
     );
-    const integerWithoutDecimalPlaces = normalizedMoneyValue.length === 1;
 
-    if (behaviorMode === 'typing' && integerWithoutDecimalPlaces) {
+    const isIntegerOfOneDigit = normalizedMoneyValue.length === 1;
+
+    if (behaviorMode === 'typing' && isIntegerOfOneDigit) {
       const newNumberFormat = Number(normalizedMoneyValue) / 100;
       return Number(newNumberFormat).toFixed(2);
     }
 
-    if (behaviorMode === 'standard' && integerWithoutDecimalPlaces) {
-      return Number(normalizedMoneyValue).toFixed(2);
-    }
-
     return normalizedMoneyValue;
   },
-  normalizeMoneyValue: (numberToNormalized: string) => {
-    const [stringInteger, stringDecimal] = numberToNormalized.split('.');
+  /**
+   * Normalizes a numeric value
+   *
+   * @param value number to normalize
+   *
+   * Default behavior: Entry: `1.00` - Departure: `1.00`
+   *
+   * Text field behavior
+   *
+   * Removing the last digit: Entry: `1.0` - Departure: `0.10`
+   *
+   * Adding more digits: Entry: `1.000` - Departure: `10.00`
+   */
+  normalizeMoneyValue: (value: string) => {
+    const [stringInteger, stringDecimal] = value.split('.');
 
     if (stringDecimal && stringDecimal.length === 1) {
       const lastPositionOfTheInteger = stringInteger.length - 1;
@@ -81,18 +112,18 @@ const moneyMaskCustomization = {
       return `${stringInteger}${firstDecimalPlace}.${lastTwoDecimalPlaces}`;
     }
 
-    return numberToNormalized;
+    return value;
   },
 };
 
 // 10.000,00
 const moneyMask = (
   value: string | number,
-  maskBehaviorMode: BehaviorMode = 'standard',
+  behaviorMode: BehaviorMode = 'standard',
 ) => {
   if (value || Number.isInteger(value)) {
     const moneyValue = moneyMaskCustomization.maskBehaviorMode(
-      maskBehaviorMode,
+      behaviorMode,
       value,
     );
 
@@ -107,9 +138,8 @@ const moneyMask = (
 
 // 000.000.000-00
 const cpfMask = (value: string | number) => {
-  const stringValue = value.toString();
+  const stringValue = onlyNumbersMask(value);
   return stringValue
-    .replace(/\D/g, '')
     .replace(/(\d{3})(\d)/, '$1.$2')
     .replace(/(\d{3})(\d)/, '$1.$2')
     .replace(/(\d{3})(\d{1,2})/, '$1-$2')
@@ -118,9 +148,8 @@ const cpfMask = (value: string | number) => {
 
 // 00.000.000/0000-000
 const cnpjMask = (value: string | number) => {
-  const stringValue = value.toString();
+  const stringValue = onlyNumbersMask(value);
   return stringValue
-    .replace(/\D/g, '')
     .replace(/(\d{2})(\d)/, '$1.$2')
     .replace(/(\d{3})(\d)/, '$1.$2')
     .replace(/(\d{3})(\d)/, '$1/$2')
@@ -129,55 +158,42 @@ const cnpjMask = (value: string | number) => {
 
 // 000.000.000-00 or 00.000.000/0000-000
 const cpfOrCnpjMask = (value: string | number) => {
-  const stringValue = value.toString();
-  if (stringValue.length >= 15) {
-    return cnpjMask(value);
+  const stringValue = onlyNumbersMask(value);
+  if (stringValue.length <= 11) {
+    return cpfMask(value);
   }
-  return cpfMask(value);
+  return cnpjMask(value);
 };
 
 // (00) 00000-0000
 const phoneMask = (value: string | number) => {
-  const stringValue = value.toString();
+  const stringValue = onlyNumbersMask(value);
   return stringValue
-    .replace(/\D/g, '')
     .replace(/(\d{2})(\d)/, '($1) $2')
     .replace(/(\d{5})(\d{4})/, '$1-$2');
 };
 
 // (00) 0000-0000
 const landlineTelephoneMask = (value: string | number) => {
-  const stringValue = value.toString();
+  const stringValue = onlyNumbersMask(value);
   return stringValue
-    .replace(/\D/g, '')
     .replace(/(\d{2})(\d)/, '($1) $2')
     .replace(/(\d{4})(\d{4})/, '$1-$2');
 };
 
 // 00000-000
 const cepMask = (value: string | number) => {
-  const stringValue = value.toString();
-  return stringValue.replace(/\D/g, '').replace(/^(\d{5})(\d{3})+?$/, '$1-$2');
+  const stringValue = onlyNumbersMask(value);
+  return stringValue.replace(/^(\d{5})(\d{3})+?$/, '$1-$2');
 };
 
 // 00/00/0000
 const dateMask = (value: string | number) => {
-  const stringValue = value.toString();
+  const stringValue = onlyNumbersMask(value);
   return stringValue
-    .replace(/\D/g, '')
     .replace(/(\d{2})(\d)/, '$1/$2')
     .replace(/(\d{2})(\d)/, '$1/$2')
     .replace(/(\d{4})(\d)/, '$1');
-};
-
-const onlyLettersMask = (value: string | number) => {
-  const stringValue = value.toString();
-  return stringValue.replace(/[0-9!@#¨$%^&*)(+=._-]+/g, '');
-};
-
-const onlyNumbersMask = (value: string | number) => {
-  const stringValue = value.toString();
-  return stringValue.replace(/\D/g, '');
 };
 
 export type MaskTypes =
@@ -194,21 +210,16 @@ export type MaskTypes =
 
 type Masks = {
   [key in MaskTypes]: {
-    maskEvent: (event: React.FormEvent<HTMLInputElement>) => string;
+    maskEvent: (
+      event: React.FormEvent<HTMLInputElement>,
+      maskBehaviorMode?: BehaviorMode,
+    ) => string;
     /**
      * Customizable mask created with Regex
+     *
      * @param value Mask value.
-     * @param maskBehaviorMode Mask behavior mode, "standard" | "typing".
-     *
-     *  example:
-     *
-     * `maskBehaviorMode` in maskMoney
-     *
-     *  Mode "standard":
-     *  - input: 1 -> output: 1,00
-     *
-     *  Mode "typing":
-     *  - input: 1 -> output: 0,01
+     * @param maskBehaviorMode Mask behavior mode: `standard` | `typing`.
+     * - default: `standard`
      */
     maskRegex: (
       value: string | number,
@@ -219,8 +230,8 @@ type Masks = {
 
 const masks: Masks = {
   money: {
-    maskEvent: (event: React.FormEvent<HTMLInputElement>) => {
-      return moneyMask(event.currentTarget.value);
+    maskEvent: (event, maskBehaviorMode) => {
+      return moneyMask(event.currentTarget.value, maskBehaviorMode);
     },
     maskRegex: moneyMask,
   },
